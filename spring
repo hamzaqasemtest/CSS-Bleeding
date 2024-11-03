@@ -1,0 +1,768 @@
+
+
+important lectures
+
+    18 dev tools overview 
+
+
+=======================
+
+study later 
+    spirng logging 
+
+=======================
+
+maven --> import the jar files 
+
+======================
+questions
+
+what is spring project 
+what is maven 
+how it works 
+    there is local repo and remote repo
+    auto download dependency of a dependency
+    creates the TARGET directory when building (no build-path / class-path issues)
+    standarized directory stucture 
+
+
+what is inversion of control (IOC)
+
+    outscourcing the contruction and managment of objection 
+
+    its oopsite of flow control application calls the dependcy 
+    with IOC the framework calls the dependcy 
+    in other words dependcy are provided externally out side application class
+
+    examnple {
+        classA  , classManager 
+
+        classA request coach class from classManager
+        classManager gives (based on configuartion) either a [ football-couch refrence OR basketball-couch refence  ]  
+    }
+
+    inversion controll vs flow controll {
+
+        flow controll 
+
+            public class TextEditor {
+                private SpellChecker checker;
+
+                public TextEditor() {
+                    this.checker = new SpellChecker();
+                }
+
+                // other methods...
+            }
+
+        inversion controll 
+
+            public class TextEditor {
+                private SpellChecker checker;
+
+                @Autowired
+                public TextEditor(SpellChecker checker) {
+                    this.checker = checker;
+                }
+
+                // other methods...
+            }
+
+    }
+
+
+what is two main objective of spring container 
+
+    create and manage objects (inversion of controll)
+    inject object depencencies (Dependency injection)
+
+====================== TOPICS ==============================
+
+first app 
+
+
+    @SpringBootApplication
+    public class Test1Application {
+
+        public static void main(String[] args) {
+            SpringApplication.run(Test1Application.class, args);
+        }
+    }
+
+    in general {
+        instance of SpringApplication
+            determines whether the application is a web application or not.
+            loads application context,
+            scanning for components,
+                start at same package 
+                subPackages
+                otherPackagesNeeds pass args to main @SpringBootApplication(scanPackge = "com.pp.p")
+                    TODO: Q: what if outside the java folder 
+
+            configuring your application based on your classpath and beans.
+            start the tomcat server
+    }
+    
+    @SpringBootApplication {
+        conssits of 
+            @EnalbleAutoConfiguration 
+            @ComponentScan
+                TODO: search curentPackages --> searc subPackages 
+            @configuartion
+    }
+
+==============================
+explain the pom.xml tags 
+
+
+    <parent>:
+        when a project is a part of a multi-module project 
+    <groupId>, <artifactId>, and <version> : city/street/homeNum 
+        unique identifer for the project 
+    <properties>: 
+        are specific to the Maven project and are used within the scope of the pom.xml file itself.
+        difne then to use in the same file ${}
+
+
+what is spring-boot-starter 
+    <spring-boot-starter-web>: its list of common compatible dependency
+
+
+=========================
+BEST WAY TO INJECT A CONFIGURATION 
+
+
+    @Component
+    public class MyComponent {
+        private final String myProperty;
+
+        public MyComponent(@Value("${my.property}") String myProperty) {
+            this.myProperty = myProperty;
+        }
+    }
+
+    ----VS-----
+
+    @Component
+    public class MyComponent {
+        @Value("${my.property}") // cant be final and imutable 
+        private String myProperty;
+    }
+
+===========================
+GENERALS 
+
+
+spring actuators /actuators/health
+    health byDefault 
+    others needs to add config to application.properties
+    ex: beans,mappings,info ..  
+
+spring security 
+
+    normal login
+        terminal password 
+        provide user/pass in application.properties
+
+    you can exclude,include endpoints (only for actuaters)
+        include 
+            management.endpoints.web.exposure.include = health
+            management.info.env.enabled = true
+        exclude 
+            management.endpoints.web.exposure.exclude = health
+
+
+===========================
+
+constuctor injection vs setter injection vs field injection (ask_Gpt_for_more)
+
+    constuctor injection: required dependency
+    setter injection: optional 
+    field injection: not recomended cause hard to unit test (TODO: how)
+
+
+====================================
+Annotations
+
+
+    @Qualifier {
+        put it before method arg and make first letter small  ClassA -- > classA 
+            public setSturdent(@Qualifier(classA) classInterface c) {}
+    } 
+
+    @Primary {
+        put it on the class 
+        two Primaries of the same type not allowed 
+    }
+
+
+
+
+======================= EXTRA =========================
+
+randoms 
+
+• By default, when your application starts, all beans are initialized
+
+after Spring 4.3
+    if a class, which is defined as a Spring bean, has only one constructor, the @Autowired annotation can be omitted
+
+@Value vs @ConfigurationProperties. 
+    @ConfigurationProperties supports complex properties,
+
+@Autowired: is optional if only have one constuctor
+
+@Qualifier vs @Primary
+    Qualifier stronger 
+    
+    @Qualifier: when creating service based on Interface 
+                the owner of the service specify which type
+
+    @Primary: the owner of the typed class specify not the service owner 
+
+====================================
+Lazy initialization 
+
+
+behind_the_scene {
+    disabled by default
+
+    • A bean will only be initialized in the following cases:
+        • It is needed for dependency injection
+        • Or it is explicitly requested
+
+    Once we access REST endpoint --> beans start to be created 
+
+        could cause time out request error 
+}
+
+
+
+
+how to do it {
+    @Lazy for each class 
+    global configuration property for all classes --> in the application.properties
+}
+
+
+advantages {
+    enhance the startup time 
+}
+
+disadvantages {
+    RestController issue 
+    make sure to have enough memory
+}
+
+====================================
+Bean Scopes
+
+
+behind_the_scene {
+    scope refers to the lifecycle of a bean
+
+    default scope is singleton
+
+    Spring Container ----> creates one instance --> cached in memory
+}
+
+
+types {
+    singleton Create a single shared instance of the bean. Default scope.
+    prototype Creates a new bean instance for each container request.
+    request Scoped to an HTTP web request. Only used for web apps.
+    session Scoped to an HTTP web session. Only used for web apps.
+    global-session Scoped to a global HTTP web session. Only used for web apps.
+}
+
+note {
+    initialization method called for all objects regardless of scope, 
+    For "prototype" scoped beans, Spring does not call the destroy method
+    Prototype beans are lazy by default
+}
+
+how to do it {
+    @Scope(ConfigurableBeanFactory.SCOPE_SINGLETON) for each class 
+}
+
+========================
+@PostConstruct before contruct the bean 
+@PreDestroy before destroy the bean 
+
+
+====================================
+@Bean
+
+why {
+    • Make an existing third-party class available to Spring framework
+    • You may not have access to the source code of third-party class
+}
+
+how to do it {
+    make class with @Configuration
+    then make a method_name with @Bean thats return third_party_type
+    import third_party_type type 
+
+    optional if subclass of interface: to inject it into service add @Qualifier("method_name")
+
+    example {
+
+        @Configuration
+        public class SportConfig {
+
+            @Bean("beanIdExample")  // instead of using the default "swimCoach as a beanId"
+            public Coach swimCoach() {
+                return new SwimCoach();
+            }
+        }
+
+    }
+}
+
+====================================
+what is hibernate 
+
+    intermidate between database and java database Table class (ORM)
+    • A framework for persisting / saving Java objects in a database
+
+    advantages {
+        handles all of the low-level SQL
+        • Minimizes the amount of JDBC code you have to develop
+        • Hibernate provides the Object-to-Relational Mapping (ORM)
+    }
+
+
+===================================
+what is ORM 
+
+TODO: continue 
+what is JDBC {
+
+    JDBC (Java Database Connectivity) is a Java API that enables Java programs to execute SQL statements and interact with relational databases. When you use JDBC directly, you have to handle a wide variety of database-specific exceptions, as JDBC exposes database-specific error codes from SQL exceptions.
+
+}
+
+====================================
+what is jpa in java ( jakarta persistence api )
+
+    • Standard API for Object-to-Relational-Mapping (ORM)
+
+    its interface thats has many implementations (vendor implementation)
+
+        Hibernate
+        EclipseLink
+        ....
+        
+    benefits {
+        witch vendor implementations easly 
+    }
+
+===================================
+to start with hibernate 
+
+    1- install depencencies
+
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-data-jpa</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>com.mysql</groupId>
+			<artifactId>mysql-connector-j</artifactId>
+			<scope>runtime</scope>
+		</dependency>
+
+    2- configure the config file 
+
+        spring.datasource.url=jdbc:mysql://localhost:3306/student_tracker
+        spring.datasource.username=springstudent
+        spring.datasource.password=springstudent
+        spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver {
+            // this is optional 
+            // it becomes complusry if 
+                if Spring Boot does not have built-in support for it 
+                    example: Oracle Database , IBM DB2 , Microsoft SQL Server , noSQL databases  
+                    should download separate starters
+                        spring-boot-starter-data-mongodb,
+                        com.microsoft.sqlserver
+                       
+        } 
+
+    3- test to ensure its working 
+
+================================
+NOTES ON jpa 
+
+    In Spring Boot, Hibernate is the default implementation of JPA
+
+    EntityManager is main component for creating queries (from jakarta)
+
+        Database --> Datasource --> EntityManager --> DAO_Object 
+
+    Spring Boot will automatically create the beans (needs config informations)
+
+        DataSource, EntityManager 
+
+        behind_the_scene {
+            1- look for DataSource if not exist create one 
+            
+            2- read the properties from the application.properties file (TODO: anthoer approach)
+            
+            3- if no config found spring will use Embedded Databases
+
+                example: (like H2, HSQLDB, or Derby)
+                its in memory database 
+
+            4- configure the "JPA Properties" 
+
+                such as: entity manager factory and transaction manager
+            
+            5- adapt to the specific database vendor:  (like H2, MySQL, PostgreSQL)  
+
+                its apply some optimizations 
+            
+            6- Setup Connection Pool 
+
+                like HikariCP for efficient database connection management
+        }
+
+====================================
+
+	@Bean
+	public CommandLineRunner commandLineRunner(String [] args) {
+		return runner -> {
+
+		};
+	}
+
+    note : "Executed after the Spring Beans have been loaded"
+
+
+====================================
+what is Entity Class
+    Java class that is mapped to a database table
+
+=======================================
+to make entity class 
+
+    @Entity
+    @Table: optional but better practise 
+
+    id annotations 
+
+        @Id: required 
+
+        @GeneratedValue(strategy = GenerationType.IDENTITY)
+            which is appropriate for databases that support auto-incremented columns
+
+        @Column(name="id") 
+
+
+    other fields (@Column(name="id"))
+
+
+    public or protected no-argument constructor (must) (can have other constructor) TODO: WHY 
+
+        compatibility with frameworks that use proxies therfore make lazy loading
+
+
+    toString() method 
+    override equals and hash code 
+    Choose Appropriate Fetch Strategies (EAGER vs. LAZY)
+    Use a Version Field for Optimistic Locking:
+
+        TODO: How and how its implemnt internally 
+
+    use  @Access(AccessType.FIELD) {
+        why 
+            if there is a bussiness logic in getters and setters 
+            or there is possibility it would be in the future 
+
+            slight performance (no methods calls)
+
+            avoiding Partially Initialized Objects: When entities are loaded by JPA, field access ensures that the entity is fully initialized after its constructor has run. With property access, if JPA uses a setter that relies on other properties of the entity that have not yet been set, it could lead to partially initialized objects or unexpected behavior.
+
+
+    }
+
+
+====================================
+a read only Entity class 
+
+    @Immutable to the top of the class {
+        Hibernate will not generate SQL UPDATE statements for entities marked as @Immutable
+        it imporoves performance Hibernate can make certain optimizations (use cache)
+        @Immutable is specific to Hibernate and is not part of the JPA specification.
+    }
+
+
+    make all fileds private with this annotation 
+
+        @Column(name = "submitter_name", updatable = false, nullable = false)
+        @Column(length = 255) means --> length < 255 
+        @Column(unique = true)
+        @Column(precision = 10, scale = 2) --> for a number 
+        @Column(columnDefinition = "varchar") // varchar or TEXT ... is mysql datatype (NOT GOOD PRACTISE)
+
+        example {
+            @Column(insertable = false, updatable = false)
+            private LocalDateTime createdAt;
+            // time is generated by sql (no insrt , no update by java)
+        }
+
+    Constructor is private to prevent direct instantiation
+
+    Static factory method to create instances {
+        public static FormSubmission create(String submitterName, String submitterEmail, String submissionContent) {
+            FormSubmission submission = new FormSubmission();
+            submission.submittedAt = LocalDateTime.now(); // Set the submission time during creation
+            submission.submitterName = submitterName;
+            submission.submitterEmail = submitterEmail;
+            submission.submissionContent = submissionContent;
+            return submission;
+        }
+    }
+
+    Remove Setters
+
+    TODO: another way using @Transactional(readOnly = true)
+====================================
+ID Generation Strategies (TODO: explore them in details)
+
+    GenerationType.AUTO {
+
+    }
+
+
+    GenerationType.SEQUENCE {
+
+        why {
+            its a custom way for the developers to customize a way 
+            useful in a multi-user environment (with differnt users)
+            avoid primary key collisions
+        }
+
+
+        code {
+            @Id
+            @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "entity_seq_generator")
+            @SequenceGenerator(name = "entity_seq_generator", sequenceName = "my_entity_seq", allocationSize = 1)
+            private Long id;
+
+            result: 1 2 3 4 5 
+        }
+
+        code {
+            @Id
+            @GeneratedValue(strategy = GenerationType.SEQUENCE)
+            private Long id;
+
+            result: {
+                unexpected behaviour 
+                MyEntity:    AnotherEntity:
+                    1            2
+                    3            4
+                    5            6
+                    ...          ...
+            }
+        }
+
+    }
+
+    GenerationType.TABLE {
+        bad way 
+    }
+
+    GenerationType.IDENTITY {
+        persistence provider must assign primary keys using a database identity column
+    }
+
+    custom way {
+        Create implementation of org.hibernate.id.IdentifierGenerator
+        • Override the method: public Serializable generate(…)
+    }
+
+
+    TODO: deep dive before interview 
+
+====================================
+note 
+
+    lazily fetched by default {
+        @OneToMany and @ManyToMany
+    }
+
+    eagerly fetched by default {
+        @ManyToOne and @OneToOne
+    }
+
+    this behaviour can be changed 
+
+    TODO: know what a single class look like 
+
+====================================
+DAO     
+
+    define DAOinterface
+
+    dfine DAOImpl {
+        inject: private EntityManager entityManager;
+    }
+
+===================================
+Annotations
+
+    @Transactional: {
+        by springboot not hibernate
+        place it above the method 
+    }  
+
+
+    @Component {
+        gneric stereotype for any Spring-managed component
+        annotations that extend @Component {
+            @Repository
+            @Service
+            @Controller
+            @RestController
+            ....
+        }
+        TODO: what does mean annotation to extend another annotation {
+
+            its called meta-annotations when annotation is used to annotatate another annotation
+
+            @Indexed and @Component story {
+                @Component annotation in Spring, which is itself annotated with @Indexed. This means that @Component carries with it the behavior of @Indexed, which is to indicate that classes annotated with @Component should be indexed and discovered by classpath scanning.
+            }
+
+        }
+    }
+
+
+
+    @interface: to define a custom anootation (TODO: search more)
+
+    TODO: search more
+    how to define custom annotations {
+        @Component // this means MyCustomAnotaion extends @Component
+        public @interface MyCustomAnotaion {
+            // Additional attributes and methods can be defined here
+        }
+        // does not extend anthing 
+        public @interface MyCustomAnotaion {
+            // Additional attributes and methods can be defined here
+        }
+    }
+
+====================================
+
+@Repository
+
+    when used {
+        for DAO implementations classes 
+        TODO: Explore more use cases 
+    }
+
+    its allow for translated for JDBC Exceptions 
+    Spring also provides translation of any JDBC related exceptions
+
+        JDBC abstraction called "DataAccessException hierarchy."
+            allow developers to handle database errors in a more database-agnostic way
+
+            instead of writing code to handle the specific SQL error codes for each database, you can catch and handle the more general DataAccessException
+
+
+====================================
+what is JPA Query Language (JPQL)
+
+    JPQL is based on entity name and entity field
+    
+
+
+====================================
+
+properties 
+
+    server port 
+    default context path --> instead of (/) make it (/default)
+    session time out
+
+    # Turn off the Spring Boot banner
+    spring.main.banner-mode=off
+
+    # Reduce logging level. Set logging level to warn
+    logging.level.root=warn
+
+========================================= SHIT ============================
+
+
+spring core container 
+
+    core layer 
+        factory for creating beans 
+
+
+    context layer 
+        spring container the hold the beans in memory 
+
+
+AOB section (Aspect object programming)
+
+    define: 
+        add functionality declartively (logging, security)
+        by using config files and annotations
+
+Data Access Layer 
+
+    why 
+        communicate with database 
+
+Web layer 
+    contains: servlet --> websockets --> web
+
+inftastucture 
+
+test layer 
+
+==========================
+
+to run spring from cmd 
+
+    java -jar example.jar 
+
+    or 
+
+    mvn package 
+    mvn spring-boot:run // plugin included in the pom.xml
+
+
+
+==============================================
+
+
+
+
+
+==============================================
+not important
+
+
+@PostConstruct
+
+    called after all dependencies has been injected 
+    use case: init config ...
+    alternative
+        implements InitializingBean 
+
+
+@PreDestroy
+
+    called before destroy the bean
+
+    use case: releasing resources, closing connections, or any other shutdown operations
+
+    have no parameters
+    can have any visibility (private, protected, public).
+    exception does not stop destroy 
+    
